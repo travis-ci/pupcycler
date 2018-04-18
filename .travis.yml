@@ -1,2 +1,36 @@
 language: go
+
 go: 1.10.x
+
+cache:
+  directories:
+  - "${HOME}/gopath/bin"
+
+env:
+  global:
+  - TRAVIS_COMMIT_SHORT="$(echo ${TRAVIS_COMMIT} | cut -b1-7)"
+  - TRAVIS_COMMIT_LESSSHORT="$(echo ${TRAVIS_COMMIT} | cut -b1-9)"
+  - PATH="${HOME}/gopath/bin:${PATH}"
+
+addons:
+  artifacts:
+    paths:
+    - "./build/linux/amd64/pupcycler"
+    - "./build/darwin/amd64/pupcycler"
+    - "./build.tar.gz"
+    target_paths:
+    - travis-ci/pupcycler/$TRAVIS_BRANCH
+    - travis-ci/pupcycler/$TRAVIS_COMMIT
+    - travis-ci/pupcycler/$TRAVIS_COMMIT_SHORT
+    - travis-ci/pupcycler/$TRAVIS_COMMIT_LESSSHORT
+
+script:
+- make
+- build/linux/amd64/pupcycler --help
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+- tar -czvf build.tar.gz build Procfile Makefile
+
+notifications:
+  email: false
