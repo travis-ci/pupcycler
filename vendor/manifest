@@ -1,0 +1,37 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/BurntSushi/toml",
+			"repository": "https://github.com/BurntSushi/toml",
+			"vcs": "git",
+			"revision": "a368813c5e648fee92e5f6c30e3944ff9d5e8895",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/packethost/packngo",
+			"repository": "https://github.com/packethost/packngo",
+			"vcs": "git",
+			"revision": "304c6c66dd279f40c3cf4fe470cca1589236cc2d",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/urfave/cli.v2",
+			"repository": "https://gopkg.in/urfave/cli.v2",
+			"vcs": "git",
+			"revision": "d3ae77c26ac8db90639677e4831a728d33c36111",
+			"branch": "v2",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183",
+			"branch": "master",
+			"notests": true
+		}
+	]
+}
