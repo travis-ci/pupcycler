@@ -42,6 +42,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/pkg/errors",
+			"repository": "https://github.com/pkg/errors",
+			"vcs": "git",
+			"revision": "816c9085562cd7ee03e7f8188a1cfd942858cded",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/sirupsen/logrus",
 			"repository": "https://github.com/sirupsen/logrus",
 			"vcs": "git",

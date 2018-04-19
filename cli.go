@@ -31,6 +31,12 @@ func Main() {
 						Aliases: []string{"p"},
 						EnvVars: []string{"PUPCYCLER_PORT", "PORT"},
 					},
+					&cli.StringSliceFlag{
+						Name:    "auth-tokens",
+						Usage:   "auth tokens used as tokens for auth",
+						Aliases: []string{"T"},
+						EnvVars: []string{"PUPCYCLER_AUTH_TOKENS", "AUTH_TOKENS"},
+					},
 				},
 			},
 		},
@@ -42,7 +48,10 @@ func Main() {
 }
 
 func runServe(ctx *cli.Context) error {
-	srv := &server{log: setupLogger(ctx.Bool("debug"))}
+	srv := &server{
+		authTokens: ctx.StringSlice("auth-tokens"),
+		log:        setupLogger(ctx.Bool("debug")),
+	}
 	return srv.Serve(ctx.String("port"))
 }
 
