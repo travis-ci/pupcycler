@@ -10,6 +10,24 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/gomodule/redigo/internal",
+			"repository": "https://github.com/gomodule/redigo",
+			"vcs": "git",
+			"revision": "9352ab68be133885e31a43661cc42a220cb8e821",
+			"branch": "master",
+			"path": "internal",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gomodule/redigo/redis",
+			"repository": "https://github.com/gomodule/redigo",
+			"vcs": "git",
+			"revision": "9352ab68be133885e31a43661cc42a220cb8e821",
+			"branch": "master",
+			"path": "/redis",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/gorilla/context",
 			"repository": "https://github.com/gorilla/context",
 			"vcs": "git",

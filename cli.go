@@ -18,6 +18,13 @@ func Main() {
 				Aliases: []string{"D"},
 				EnvVars: []string{"PUPCYCLER_DEBUG", "DEBUG"},
 			},
+			&cli.StringFlag{
+				Name:    "redis-url",
+				Value:   "redis://localhost:6379/0",
+				Usage:   "the `REDIS_URL` used for cruddy fun",
+				Aliases: []string{"R"},
+				EnvVars: []string{"PUPCYCLER_REDIS_URL", "REDIS_URL"},
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -51,6 +58,7 @@ func runServe(ctx *cli.Context) error {
 	srv := &server{
 		authTokens: ctx.StringSlice("auth-tokens"),
 		log:        setupLogger(ctx.Bool("debug")),
+		db:         setupDbFromCtx(ctx),
 	}
 	return srv.Serve(ctx.String("port"))
 }
@@ -61,4 +69,10 @@ func setupLogger(debug bool) logrus.FieldLogger {
 		log.SetLevel(logrus.DebugLevel)
 	}
 	return log
+}
+
+func setupDbFromCtx(ctx *cli.Context) store {
+	return &redisStore{
+		cg: buildRedisPool(ctx.String("redis-url")),
+	}
 }
