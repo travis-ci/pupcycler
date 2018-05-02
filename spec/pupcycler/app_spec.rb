@@ -12,6 +12,7 @@ describe Pupcycler::App do
   before do
     allow_any_instance_of(described_class).to receive(:store)
       .and_return(fake_store)
+    Pupcycler.config.auth_tokens = %w[fafafaf]
   end
 
   def app
