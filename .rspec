@@ -1,0 +1,4 @@
+--color
+--format documentation
+--require ./spec/support
+--require pry

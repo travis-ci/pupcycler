@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -o errexit
+
+main() {
+  local server_args=(
+    puma
+    --log-requests
+    --port "${PORT:-5000}"
+  )
+
+  if [[ "${RACK_ENV:-development}" == development ]]; then
+    server_args=( bundle exec rerun -- "${server_args[@]}" )
+  else
+    server_args=( bundle exec je "${server_args[@]}" )
+  fi
+
+  echo "---> running: ${server_args[@]}"
+  exec "${server_args[@]}"
+}
+
+main "${@}"
