@@ -68,17 +68,16 @@ module Pupcycler
 
     private def fetch_for_device(key, device_id,
                                  default_value: nil, coerce: ->(v) { v })
-      key.strip!
+      key = key.to_s.strip
       raise 'missing key' if key.empty?
 
-      device_id.strip!
+      device_id = device_id.to_s.strip
       raise 'missing device id' if device_id.empty?
 
       ret = { value: default_value }
 
       redis_pool.with do |redis|
-        value = redis.hget(key, device_id).to_s
-        value.strip!
+        value = redis.hget(key, device_id).to_s.strip
         ret[:value] = coerce.call(value) unless value.empty?
       end
 
@@ -86,10 +85,10 @@ module Pupcycler
     end
 
     private def save_for_device(key, device_id, value: nil)
-      key.strip!
+      key = key.to_s.strip
       raise 'missing key' if key.empty?
 
-      device_id.strip!
+      device_id = device_id.to_s.strip
       raise 'missing device id' if device_id.empty?
 
       redis_pool.with do |redis|

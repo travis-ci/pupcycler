@@ -29,8 +29,8 @@ module Pupcycler
     end
 
     private def device_action(device_id, action)
-      device_id.strip!
-      action.strip!
+      device_id = device_id.to_s.strip
+      action = action.to_s.strip
       raise 'missing device id' if device_id.empty?
       raise 'missing action type' if action.empty?
 
