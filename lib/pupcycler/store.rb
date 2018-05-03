@@ -34,8 +34,12 @@ module Pupcycler
     end
 
     def fetch_startup(device_id: '')
-      fetch_for_device('device:states', device_id, default_value: nil,
-                                                   coerce: TIME_COERCE)
+      fetch_for_device('device:startups', device_id, default_value: nil,
+                                                     coerce: TIME_COERCE)
+    end
+
+    def save_shutdown(device_id: '')
+      save_for_device('device:shutdowns', device_id)
     end
 
     def save_state(device_id: '', state: '')
@@ -52,6 +56,7 @@ module Pupcycler
       {
         heartbeats: TIME_COERCE,
         reboots: TIME_COERCE,
+        shutdowns: TIME_COERCE,
         startups: TIME_COERCE,
         states: ->(s) { s }
       }.each do |subkey, coerce|
