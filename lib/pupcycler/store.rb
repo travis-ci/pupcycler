@@ -109,7 +109,9 @@ module Pupcycler
 
       redis_pool.with do |redis|
         ret.merge!(
-          redis.hgetall("device:#{key}").map { |i, t| [i, coerce.call(t)] }
+          Hash[
+            redis.hgetall("device:#{key}").map { |i, t| [i, coerce.call(t)] }
+          ]
         )
       end
 
