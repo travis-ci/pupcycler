@@ -24,7 +24,7 @@ module Pupcycler
       end
     end
 
-    def reboot(device_id)
+    def reboot(device_id: '')
       device_action(device_id, 'reboot')
     end
 
