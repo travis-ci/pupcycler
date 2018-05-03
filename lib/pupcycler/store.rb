@@ -61,10 +61,10 @@ module Pupcycler
         states: ->(s) { s }
       }.each do |subkey, coerce|
         ret[subkey.to_sym] = hgetall_coerce(
-          "device:#{subkey}", coerce: coerce
+          subkey, coerce: coerce
         )
         ret[:"#{subkey}_count"] = hgetall_coerce(
-          "device:#{subkey}:count", coerce: ->(s) { s.to_i }
+          "#{subkey}:count", coerce: ->(s) { s.to_i }
         )
       end
 
