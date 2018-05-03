@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
-require 'pupcycler'
-
 describe Pupcycler::App do
   subject { described_class }
 
   let :fake_store do
-    FakeStore.new
+    Support::FakeStore.new
   end
 
   before do
@@ -57,20 +55,11 @@ describe Pupcycler::App do
 
     it 'is ok' do
       expect(last_response.status).to eql(200)
+    end
+
+    it 'records heartbeat' do
       expect(fake_store.heartbeats).to include('fafafaf')
       expect(fake_store.heartbeats.fetch('fafafaf')).to eql(1)
     end
-  end
-end
-
-class FakeStore
-  def initialize
-    @heartbeats = {}
-  end
-
-  attr_reader :heartbeats
-
-  def save_heartbeat(device_id: '')
-    heartbeats[device_id] = 1
   end
 end

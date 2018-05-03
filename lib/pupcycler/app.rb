@@ -38,8 +38,36 @@ module Pupcycler
       protect!
       param :device_id, String, required: true
       store.save_heartbeat(device_id: params.fetch('device_id'))
+      state = store.fetch_state(device_id: params.fetch('device_id'))
       status :ok
-      json state: :up
+      json state: state
+    end
+
+    post '/startups/:device_id' do
+      protect!
+      param :device_id, String, required: true
+      store.save_startup(device_id: params.fetch('device_id'))
+      store.save_state(device_id: params.fetch('device_id'), state: 'up')
+      state = store.fetch_state(device_id: params.fetch('device_id'))
+      status :created
+      json state: state
+    end
+
+    post '/shutdowns/:device_id' do
+      protect!
+      param :device_id, String, required: true
+      store.save_shutdown(device_id: params.fetch('device_id'))
+      upcycler.reboot(device_id: params.fetch('device_id'))
+      store.save_state(device_id: params.fetch('device_id'), state: 'down')
+      state = store.fetch_state(device_id: params.fetch('device_id'))
+      status :created
+      json state: state
+    end
+
+    get '/__dump__' do
+      protect!
+      status :ok
+      json __dump__: store.dump
     end
 
     private def uptime
@@ -48,6 +76,10 @@ module Pupcycler
 
     private def store
       @store ||= Pupcycler::Store.new
+    end
+
+    private def upcycler
+      @upcycler ||= Pupcycler::Upcycler.new
     end
   end
 end

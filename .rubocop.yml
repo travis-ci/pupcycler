@@ -13,5 +13,8 @@ Metrics/BlockLength:
   Exclude:
   - 'spec/**/*_spec.rb'
 
+Metrics/MethodLength:
+  Max: 30
+
 Metrics/ParameterLists:
   Max: 7

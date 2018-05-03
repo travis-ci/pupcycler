@@ -20,8 +20,9 @@ module Pupcycler
       @once = once
     end
 
-    attr_reader :loop_sleep, :redis_pool
+    attr_reader :loop_sleep, :once, :redis_pool
     private :loop_sleep
+    private :once
     private :redis_pool
 
     def run
@@ -36,7 +37,7 @@ module Pupcycler
 
     private def run_tick
       lock_manager.lock!('worker_tick', loop_sleep * 1_000) do
-        upcycler.upcycle_stale_workers
+        upcycler.upcycle!
       end
     rescue Redlock::LockError => e
       Pupcycler.logger.error e

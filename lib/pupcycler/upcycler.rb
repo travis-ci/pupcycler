@@ -5,26 +5,46 @@ require 'pupcycler'
 module Pupcycler
   class Upcycler
     def initialize
-      @staleness_threshold = Pupcycler.config.upcycler.staleness_threshold
+      @thresholds = Pupcycler.config.upcycler_thresholds
+      @unresponsiveness_threshold = @thresholds[:unresponsive]
+      @staleness_threshold = @thresholds[:stale]
     end
 
-    attr_reader :staleness_threshold
+    attr_reader :unresponsiveness_threshold, :staleness_threshold
+    private :unresponsiveness_threshold
     private :staleness_threshold
 
-    def upcycle_stale_workers
+    def upcycle!
       worker_devices.each do |dev|
-        upcycle!(dev.id) if stale?(store.heartbeats.fetch(dev.id, nil))
+        if unresponsive?(store.fetch_heartbeat(device_id: dev.id))
+          reboot(device_id: dev.id)
+        end
+
+        if stale?(store.fetch_startup(device_id: dev.id))
+          graceful_shutdown(device_id: dev.id)
+        end
       end
     end
 
-    private def upcycle!(device_id)
-      Pupcycler.logger.warn 'upcycling', device_id: device_id
-      packet_client.reboot(device_id)
+    def reboot(device_id: '')
+      Pupcycler.logger.warn 'rebooting', device_id: device_id
+      packet_client.reboot(device_id: device_id)
+      store.save_reboot(device_id: device_id)
     end
 
-    private def stale?(last_heartbeat)
+    def graceful_shutdown(device_id: '')
+      Pupcycler.logger.info 'gracefully shutting down', device_id: device_id
+      store.save_state(device_id: device_id, state: 'down')
+    end
+
+    private def unresponsive?(last_heartbeat)
       return false if last_heartbeat.nil?
-      (now - last_heartbeat) > staleness_threshold
+      (now - last_heartbeat) > unresponsiveness_threshold
+    end
+
+    private def stale?(startup)
+      return false if startup.nil?
+      (now - startup) > staleness_threshold
     end
 
     private def worker_devices
