@@ -51,24 +51,39 @@ module Pupcycler
     end
 
     def dump
-      ret = {}
+      devices_by_id = {}
 
-      {
-        heartbeats: TIME_COERCE,
-        reboots: TIME_COERCE,
-        shutdowns: TIME_COERCE,
-        startups: TIME_COERCE,
-        states: ->(s) { s }
-      }.each do |subkey, coerce|
-        ret[subkey.to_sym] = hgetall_coerce(
-          subkey, coerce: coerce
-        )
-        ret[:"#{subkey}_count"] = hgetall_coerce(
-          "#{subkey}:count", coerce: ->(s) { s.to_i }
-        )
+      keys_coercions = {
+        heartbeat: TIME_COERCE,
+        reboot: TIME_COERCE,
+        shutdown: TIME_COERCE,
+        startup: TIME_COERCE,
+        state: ->(s) { s }
+      }
+
+      empty_device_record = proc do |id|
+        Hash[keys_coercions.keys.map { |k| [k, nil] }].merge(id: id)
       end
 
-      ret
+      keys_coercions.each do |subkey, coerce|
+        hgetall_coerce(
+          "#{subkey}s", coerce: coerce
+        ).each do |device_id, value|
+          devices_by_id[device_id] ||= empty_device_record.call(device_id)
+          devices_by_id[device_id][subkey] = value
+        end
+
+        hgetall_coerce(
+          "#{subkey}s:count", coerce: ->(s) { s.to_i }
+        ).each do |device_id, count|
+          devices_by_id[device_id] ||= empty_device_record.call(device_id)
+          devices_by_id[device_id]["#{subkey}_count".to_sym] = count
+        end
+      end
+
+      devices_by_id.values.sort do |a, b|
+        (a[:startup] || now).to_s <=> (b[:startup] || now).to_s
+      end
     end
 
     private def fetch_for_device(key, device_id,
