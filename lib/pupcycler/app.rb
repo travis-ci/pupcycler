@@ -25,6 +25,10 @@ module Pupcycler
         @auth.start_with?('token ') &&
           Pupcycler.config.auth_tokens.include?(@auth.sub(/^token /, ''))
       end
+
+      private def device_id
+        params.fetch('device_id')
+      end
     end
 
     get '/__meta__' do
@@ -36,38 +40,40 @@ module Pupcycler
 
     get '/heartbeats/:device_id' do
       protect!
-      param :device_id, String, required: true
-      store.save_heartbeat(device_id: params.fetch('device_id'))
-      state = store.fetch_state(device_id: params.fetch('device_id'))
+
+      store.save_heartbeat(device_id: device_id)
+      state = store.fetch_state(device_id: device_id)
       status :ok
       json state: state
     end
 
     post '/startups/:device_id' do
       protect!
-      param :device_id, String, required: true
-      store.save_startup(device_id: params.fetch('device_id'))
-      store.save_state(device_id: params.fetch('device_id'), state: 'up')
-      state = store.fetch_state(device_id: params.fetch('device_id'))
+
+      store.save_startup(device_id: device_id)
+      store.save_state(device_id: device_id, state: 'up')
+      state = store.fetch_state(device_id: device_id)
       status :created
       json state: state
     end
 
     post '/shutdowns/:device_id' do
       protect!
-      param :device_id, String, required: true
-      store.save_shutdown(device_id: params.fetch('device_id'))
-      upcycler.reboot(device_id: params.fetch('device_id'))
-      store.save_state(device_id: params.fetch('device_id'), state: 'down')
-      state = store.fetch_state(device_id: params.fetch('device_id'))
+
+      store.save_shutdown(device_id: device_id)
+
+      upcycler.reboot(device_id: device_id) unless rebooting_disabled?
+
+      store.save_state(device_id: device_id, state: 'down')
+      state = store.fetch_state(device_id: device_id)
       status :created
       json state: state
     end
 
-    get '/__dump__' do
+    get '/devices' do
       protect!
       status :ok
-      json __dump__: store.dump
+      json data: store.fetch_devices
     end
 
     private def uptime
@@ -80,6 +86,10 @@ module Pupcycler
 
     private def upcycler
       @upcycler ||= Pupcycler::Upcycler.new
+    end
+
+    private def rebooting_disabled?
+      Pupcycler.config.upcycler_rebooting_disabled?
     end
   end
 end

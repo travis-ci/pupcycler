@@ -9,6 +9,20 @@ module Pupcycler
     TIME_COERCE = ->(s) { Time.parse(s) }
     private_constant :TIME_COERCE
 
+    DEVICE_KEYS_COERCIONS = {
+      heartbeat: TIME_COERCE,
+      reboot: TIME_COERCE,
+      shutdown: TIME_COERCE,
+      startup: TIME_COERCE,
+      state: ->(s) { s }
+    }.freeze
+    private_constant :DEVICE_KEYS_COERCIONS
+
+    EMPTY_DEVICE_RECORD = Hash[
+      DEVICE_KEYS_COERCIONS.keys.map { |k| [k, nil] }
+    ].freeze
+    private_constant :EMPTY_DEVICE_RECORD
+
     def initialize(redis_pool: nil)
       @redis_pool = redis_pool || Pupcycler.redis_pool
     end
@@ -50,33 +64,21 @@ module Pupcycler
       fetch_for_device('device:states', device_id, default_value: 'up')
     end
 
-    def dump
+    def fetch_devices
       devices_by_id = {}
 
-      keys_coercions = {
-        heartbeat: TIME_COERCE,
-        reboot: TIME_COERCE,
-        shutdown: TIME_COERCE,
-        startup: TIME_COERCE,
-        state: ->(s) { s }
-      }
-
-      empty_device_record = proc do |id|
-        Hash[keys_coercions.keys.map { |k| [k, nil] }].merge(id: id)
-      end
-
-      keys_coercions.each do |subkey, coerce|
+      DEVICE_KEYS_COERCIONS.each do |subkey, coerce|
         hgetall_coerce(
           "#{subkey}s", coerce: coerce
         ).each do |device_id, value|
-          devices_by_id[device_id] ||= empty_device_record.call(device_id)
+          devices_by_id[device_id] ||= EMPTY_DEVICE_RECORD.merge(id: device_id)
           devices_by_id[device_id][subkey] = value
         end
 
         hgetall_coerce(
           "#{subkey}s:count", coerce: ->(s) { s.to_i }
         ).each do |device_id, count|
-          devices_by_id[device_id] ||= empty_device_record.call(device_id)
+          devices_by_id[device_id] ||= EMPTY_DEVICE_RECORD.merge(id: device_id)
           devices_by_id[device_id]["#{subkey}_count".to_sym] = count
         end
       end

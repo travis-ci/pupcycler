@@ -22,6 +22,5 @@ gem 'rubocop', group: %i[development test]
 gem 'simplecov', group: %i[development test]
 gem 'sinatra'
 gem 'sinatra-contrib'
-gem 'sinatra-param'
 gem 'travis-config', git: 'https://github.com/travis-ci/travis-config.git'
 gem 'travis-logger', git: 'https://github.com/travis-ci/travis-logger.git'

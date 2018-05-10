@@ -33,6 +33,7 @@ module Pupcycler
         ENV.fetch('REDIS_PROVIDER', 'REDIS_URL'), 'redis://localhost:6379/0'
       ),
       redis_pool_options: { size: 5, timeout: 3 },
+      upcycler_rebooting_disabled: false,
       upcycler_thresholds: { unresponsive: 3_600, stale: 43_200 },
       worker_loop_sleep: 60,
       worker_run_once: false
