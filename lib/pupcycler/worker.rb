@@ -11,27 +11,28 @@ module Pupcycler
     def self.run
       new(
         loop_sleep: Pupcycler.config.worker_loop_sleep,
-        once: Pupcycler.config.worker_run_once
+        once: Pupcycler.config.worker_run_once,
+        redis_url: Pupcycler.config.redis_url
       ).run
     end
 
-    def initialize(redis_pool: nil, loop_sleep: 60, once: false)
-      @redis_pool = redis_pool || Pupcycler.redis_pool
+    def initialize(loop_sleep: 60, once: false, redis_url: '')
       @loop_sleep = loop_sleep
       @once = once
+      @redis_url = redis_url
     end
 
-    attr_reader :loop_sleep, :once, :redis_pool
+    attr_reader :loop_sleep, :once, :redis_url
     private :loop_sleep
     private :once
-    private :redis_pool
+    private :redis_url
 
     def run
       loop do
-        Pupcycler.logger.info 'running tick'
+        logger.info 'running tick'
         run_tick
         break if once
-        Pupcycler.logger.info 'sleeping', seconds: loop_sleep
+        logger.info 'sleeping', seconds: loop_sleep
         sleep loop_sleep
       end
     end
@@ -41,19 +42,19 @@ module Pupcycler
         upcycler.upcycle!
       end
     rescue Redlock::LockError => e
-      Pupcycler.logger.error e
+      logger.error 'failed to lock', error: e
     end
 
     private def upcycler
-      @upcycler ||= Pupcycler::Upcycler.new
+      @upcycler ||= Pupcycler.upcycler
     end
 
     private def lock_manager
-      @lock_manager ||= Redlock::Client.new(
-        [
-          Redis.new(url: Pupcycler.config.redis_url)
-        ]
-      )
+      @lock_manager ||= Redlock::Client.new([Redis.new(url: redis_url)])
+    end
+
+    private def logger
+      @logger ||= Pupcycler.logger
     end
   end
 end

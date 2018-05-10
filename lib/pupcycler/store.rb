@@ -24,11 +24,10 @@ module Pupcycler
     private_constant :EMPTY_DEVICE_RECORD
 
     def initialize(redis_pool: nil)
-      @redis_pool = redis_pool || Pupcycler.redis_pool
+      @redis_pool = redis_pool
     end
 
-    attr_reader :redis_pool
-    private :redis_pool
+    attr_accessor :redis_pool
 
     def save_heartbeat(device_id: '')
       save_for_device('device:heartbeats', device_id)

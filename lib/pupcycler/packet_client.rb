@@ -7,9 +7,9 @@ require 'pupcycler'
 
 module Pupcycler
   class PacketClient
-    def initialize
-      @auth_token = Pupcycler.config.packet_auth_token
-      @project_id = Pupcycler.config.packet_project_id
+    def initialize(auth_token: '', project_id: '')
+      @auth_token = auth_token
+      @project_id = project_id
     end
 
     attr_reader :auth_token, :project_id
@@ -22,6 +22,12 @@ module Pupcycler
       resp.body.fetch('devices').map do |h|
         Pupcycler::PacketDevice.from_api_hash(h)
       end
+    end
+
+    def device(device_id: '')
+      resp = conn.get("/devices/#{device_id}")
+      raise resp.body.fetch('errors', ['ugh!']).first unless resp.success?
+      Pupcycler::PacketDevice.from_api_hash(resp.body)
     end
 
     def reboot(device_id: '')

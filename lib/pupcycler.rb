@@ -47,4 +47,29 @@ module Pupcycler
   end
 
   module_function :redis_pool
+
+  def upcycler
+    @upcycler ||= Pupcycler::Upcycler.new(
+      cooldown_threshold: config.upcycler_cooldown_threshold,
+      staleness_threshold: config.upcycler_staleness_threshold,
+      unresponsiveness_threshold: config.upcycler_unresponsiveness_threshold
+    )
+  end
+
+  module_function :upcycler
+
+  def store
+    @store ||= Pupcycler::Store.new(redis_pool: redis_pool)
+  end
+
+  module_function :store
+
+  def packet_client
+    @packet_client ||= Pupcycler::PacketClient.new(
+      auth_token: Pupcycler.config.packet_auth_token,
+      project_id: Pupcycler.config.packet_project_id
+    )
+  end
+
+  module_function :packet_client
 end
