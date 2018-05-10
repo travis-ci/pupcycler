@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 ruby '2.5.1' if ENV.key?('DYNO')
 
 gem 'connection_pool'
+gem 'fakeredis', group: %i[development test]
 gem 'faraday'
 gem 'faraday_middleware'
 gem 'jemalloc'
@@ -22,6 +23,6 @@ gem 'rubocop', group: %i[development test]
 gem 'simplecov', group: %i[development test]
 gem 'sinatra'
 gem 'sinatra-contrib'
-gem 'sinatra-param'
 gem 'travis-config', git: 'https://github.com/travis-ci/travis-config.git'
 gem 'travis-logger', git: 'https://github.com/travis-ci/travis-logger.git'
+gem 'webmock', group: %i[development test]
