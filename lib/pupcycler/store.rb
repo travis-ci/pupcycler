@@ -43,6 +43,11 @@ module Pupcycler
       save_for_device('device:reboots', device_id)
     end
 
+    def fetch_reboot(device_id: '')
+      fetch_for_device('device:reboots', device_id, default_value: nil,
+                                                    coerce: TIME_COERCE)
+    end
+
     def save_startup(device_id: '')
       save_for_device('device:startups', device_id)
     end
@@ -54,6 +59,11 @@ module Pupcycler
 
     def save_shutdown(device_id: '')
       save_for_device('device:shutdowns', device_id)
+    end
+
+    def fetch_shutdown(device_id: '')
+      fetch_for_device('device:shutdowns', device_id, default_value: nil,
+                                                      coerce: TIME_COERCE)
     end
 
     def save_state(device_id: '', state: '')

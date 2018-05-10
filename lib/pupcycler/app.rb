@@ -4,30 +4,31 @@ require 'pupcycler'
 
 require 'sinatra/base'
 require 'sinatra/json'
-require 'sinatra/param'
 
 module Pupcycler
   class App < Sinatra::Base
-    helpers Sinatra::Param
-
     BOOT_TIME = Time.now
 
     helpers do
       def protect!
         return if authorized?
-        headers['WWW-Authenticate'] = 'Basic realm="Pupcycler"'
+        headers['WWW-Authenticate'] = 'token'
         content_type :json
         halt 401, '{"no":"not you"}'
       end
 
       def authorized?
         @auth ||= request.env.fetch('HTTP_AUTHORIZATION', 'notset')
-        @auth.start_with?('token ') &&
-          Pupcycler.config.auth_tokens.include?(@auth.sub(/^token /, ''))
+        valid_auth?(@auth)
       end
 
-      private def device_id
+      def device_id
         params.fetch('device_id')
+      end
+
+      def valid_auth?(auth_value)
+        auth_value.start_with?('token ') &&
+          Pupcycler.config.auth_tokens.include?(auth_value.sub(/^token /, ''))
       end
     end
 
