@@ -7,8 +7,8 @@ describe Pupcycler::Upcycler do
   let(:store) { subject.send(:store) }
   let(:packet_client) { subject.send(:packet_client) }
   let(:last_heartbeat) { nowish - 300 }
-  let(:last_startup) { nowish - 14400 }
-  let(:worker_updated_at) { nowish - 14400 }
+  let(:last_startup) { nowish - 14_400 }
+  let(:worker_updated_at) { nowish - 14_400 }
 
   before do
     allow(store).to receive(:now).and_return(nowish)
@@ -126,9 +126,9 @@ describe Pupcycler::Upcycler do
 
   describe 'gracefully shutting down' do
     it 'changes the device state to "down"' do
-      expect {
+      expect do
         subject.graceful_shutdown(device_id: device_id)
-      }.to change {
+      end.to change {
         store.fetch_state(device_id: device_id)
       }.from('up').to('down')
     end
