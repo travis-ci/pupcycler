@@ -82,11 +82,11 @@ module Pupcycler
     end
 
     private def store
-      @store ||= Pupcycler::Store.new
+      @store ||= Pupcycler.store
     end
 
     private def upcycler
-      @upcycler ||= Pupcycler::Upcycler.new
+      @upcycler ||= Pupcycler.upcycler
     end
 
     private def rebooting_disabled?

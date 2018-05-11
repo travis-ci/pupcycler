@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 ruby '2.5.1' if ENV.key?('DYNO')
 
+gem 'codecov', require: false, group: %i[development test]
 gem 'connection_pool'
 gem 'fakeredis', group: %i[development test]
 gem 'faraday'

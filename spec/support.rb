@@ -8,7 +8,6 @@ require 'webmock/rspec'
 
 require 'fakeredis' unless ENV['INTEGRATION_SPECS'] == '1'
 
-ENV['PUPCYCLER_LOG_LEVEL'] = 'fatal'
 require 'pupcycler'
 
 RSpec.configure do |c|

@@ -8,7 +8,7 @@ describe Pupcycler::App do
   end
 
   let :store do
-    Pupcycler::Store.new
+    Pupcycler.store
   end
 
   let :nowish do
@@ -97,6 +97,23 @@ describe Pupcycler::App do
 
   describe 'POST /shutdowns/{device_id}' do
     before do
+      stub_request(
+        :get,
+        %r{api\.packet\.net/devices/fafafaf$}
+      ).to_return(
+        status: 200,
+        headers: {
+          'Content-Type' => 'application/json'
+        },
+        body: JSON.generate(
+          'updated_at' => (nowish - 3600).to_s,
+          'hostname' => 'fafafaf-testing-1-buh',
+          'id' => 'fafafaf-afafafa-fafafafafafaf-afafaf-afafafafaf',
+          'state' => 'running',
+          'tags' => %w[worker testing],
+          'created_at' => (nowish - 7200).to_s
+        )
+      )
       stub_request(
         :post,
         %r{api\.packet\.net/devices/fafafaf/actions\?type=reboot}

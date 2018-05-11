@@ -34,7 +34,9 @@ module Pupcycler
       ),
       redis_pool_options: { size: 5, timeout: 3 },
       upcycler_rebooting_disabled: false,
-      upcycler_thresholds: { unresponsive: 3_600, stale: 43_200 },
+      upcycler_cooldown_threshold: 900,
+      upcycler_staleness_threshold: 43_200,
+      upcycler_unresponsiveness_threshold: 3_600,
       worker_loop_sleep: 60,
       worker_run_once: false
     )
