@@ -10,11 +10,13 @@ module Pupcycler
     private_constant :TIME_COERCE
 
     DEVICE_KEYS_COERCIONS = {
+      boop: TIME_COERCE,
       heartbeat: TIME_COERCE,
+      hostname: nil,
       reboot: TIME_COERCE,
       shutdown: TIME_COERCE,
       startup: TIME_COERCE,
-      state: ->(s) { s }
+      state: nil
     }.freeze
     private_constant :DEVICE_KEYS_COERCIONS
 
@@ -66,11 +68,21 @@ module Pupcycler
     end
 
     def save_state(device_id: '', state: '')
-      save_for_device('device:states', device_id, value: state)
+      save_for_device('device:states', device_id, value: state, count: false)
     end
 
     def fetch_state(device_id: '')
       fetch_for_device('device:states', device_id, default_value: 'up')
+    end
+
+    def save_boop(device_id: '')
+      save_for_device('device:boops', device_id, value: now, count: false)
+    end
+
+    def save_hostname(device_id: '', hostname: '')
+      save_for_device(
+        'device:hostnames', device_id, value: hostname, count: false
+      )
     end
 
     def fetch_devices
@@ -115,7 +127,7 @@ module Pupcycler
       ret.fetch(:value)
     end
 
-    private def save_for_device(key, device_id, value: nil)
+    private def save_for_device(key, device_id, value: nil, count: true)
       key = key.to_s.strip
       raise 'missing key' if key.empty?
 
@@ -125,13 +137,15 @@ module Pupcycler
       redis_pool.with do |redis|
         redis.multi do |conn|
           conn.hset(key, device_id, value || now)
+          next unless count
           conn.hincrby("#{key}:count", device_id, 1)
         end
       end
     end
 
-    private def hgetall_coerce(key, coerce: ->(s) { s })
+    private def hgetall_coerce(key, coerce: nil)
       ret = {}
+      coerce = ->(s) { s } if coerce.nil?
 
       redis_pool.with do |redis|
         ret.merge!(
