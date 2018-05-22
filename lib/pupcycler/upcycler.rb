@@ -19,6 +19,9 @@ module Pupcycler
 
     def upcycle!
       worker_devices.each do |dev|
+        store.save_hostname(device_id: dev.id, hostname: dev.hostname)
+        store.save_boop(device_id: dev.id)
+
         if unresponsive?(store.fetch_heartbeat(device_id: dev.id))
           reboot(device_id: dev.id)
           next
