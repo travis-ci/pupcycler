@@ -16,7 +16,7 @@ module Pupcycler
 
   def version
     ENV.fetch(
-      'SOURCE_VERSION',
+      'HEROKU_SLUG_COMMIT',
       `git rev-parse HEAD 2>/dev/null`
     ).strip
   end
