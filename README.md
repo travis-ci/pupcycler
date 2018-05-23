@@ -5,8 +5,8 @@
 [![Build Status](https://travis-ci.org/travis-ci/pupcycler.svg?branch=master)](https://travis-ci.org/travis-ci/pupcycler)
 [![codecov](https://codecov.io/gh/travis-ci/pupcycler/branch/master/graph/badge.svg)](https://codecov.io/gh/travis-ci/pupcycler)
 
-Pupcycler is a an application that interacts with the [Packet
-API](https://www.packet.net/developers/api/) and
+Pupcycler (Packet Upcycler) (Doggo Recycler) is an application that interacts
+with the [Packet API](https://www.packet.net/developers/api/) and
 [travis-worker](https://github.com/travis-ci/worker) processes to restart
 servers based on certain events or time intervals.
 
