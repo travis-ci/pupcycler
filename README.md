@@ -10,6 +10,9 @@ with the [Packet API](https://www.packet.net/developers/api/) and
 [travis-worker](https://github.com/travis-ci/worker) processes to restart
 servers based on certain events or time intervals.
 
+Aside from being implemented in Ruby and being specific to Packet, Pupcycler is
+fairly similar to [Cyclist](https://github.com/travis-ci/cyclist).
+
 ## deployment
 
 The intended deployment is via Heroku as `web` and `worker` dynos (see
