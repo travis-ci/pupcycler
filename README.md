@@ -13,22 +13,24 @@ servers based on certain events or time intervals.
 ## deployment
 
 The intended deployment is via Heroku as `web` and `worker` dynos (see
-[`Procfile`](./Procfile) with a Redis provider that is configured via
+[`Procfile`](./Procfile)) with a Redis provider that is configured via
 `REDIS_URL` or a `REDIS_PROVIDER` indirect env lookup.
 
 ## development
 
-Typical development & testing cycle should be done via the same command run on
-Travis CI:
+Patches welcome!  Please be sure to review the [code of
+conduct](./CODE_OF_CONDUCT.md).
+
+Verification may be done via the same command run on Travis CI:
 
 ``` bash
 bundle exec rake
 ```
 
 :warning: This project uses [RuboCop](http://batsov.com/rubocop/), which may
-mean that the above command fails based on changes one has made.  If you aren't
-familiar with RuboCop and you'd rather not have to deal with it, you can choose
-to automatically correct any issues like so:
+mean that the above command fails after making changes.  If you aren't familiar
+with RuboCop and you'd rather not have to deal with it, you can choose to
+automatically correct any issues like so:
 
 ``` bash
 bundle exec rubocop --auto-correct --auto-gen-config
