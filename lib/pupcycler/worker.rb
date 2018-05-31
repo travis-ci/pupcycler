@@ -43,7 +43,7 @@ module Pupcycler
       end
     rescue Redlock::LockError => e
       logger.error 'failed to lock', error: e
-    rescue => e
+    rescue StandardError => e
       logger.error 'boomsies', error: e
     end
 
