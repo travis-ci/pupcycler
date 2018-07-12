@@ -109,6 +109,17 @@ module Pupcycler
       end
     end
 
+    def wipe_device(device_id: '')
+      redis_pool.with do |redis|
+        redis.multi do |conn|
+          DEVICE_KEYS_COERCIONS.keys.each do |subkey|
+            conn.hdel("devices:#{subkey}s", device_id)
+            conn.hdel("devices:#{subkey}s:count", device_id)
+          end
+        end
+      end
+    end
+
     private def fetch_for_device(key, device_id,
                                  default_value: nil, coerce: ->(v) { v })
       key = key.to_s.strip

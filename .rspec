@@ -1,4 +1,5 @@
 --color
 --format documentation
+--order rand
 --require ./spec/support
 --require pry

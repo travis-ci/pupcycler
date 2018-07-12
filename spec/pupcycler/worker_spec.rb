@@ -33,12 +33,12 @@ describe Pupcycler::Worker do
 
   it 'rescues StandardError and descendants within each run tick' do
     allow(fake_upcycler).to receive(:upcycle!).and_raise(KaboomsError)
-    expect { described_class.run }.to_not raise_error(KaboomsError)
+    expect { described_class.run }.not_to raise_error
   end
 
   it 'rescues redis locking errors within each run tick' do
     allow(fake_lock_manager).to receive(:lock!).and_raise(Redlock::LockError)
-    expect { described_class.run }.to_not raise_error(Redlock::LockError)
+    expect { described_class.run }.not_to raise_error
   end
 end
 

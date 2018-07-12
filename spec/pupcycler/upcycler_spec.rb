@@ -3,12 +3,15 @@
 describe Pupcycler::Upcycler do
   subject { Pupcycler.upcycler }
   let(:nowish) { Time.parse(Time.now.utc.iso8601(0)) }
-  let(:device_id) { 'fafafaf-afafafa-fafafafafafaf-afafaf-afafafafaf' }
   let(:store) { subject.send(:store) }
   let(:packet_client) { subject.send(:packet_client) }
   let(:last_heartbeat) { nowish - 300 }
   let(:last_startup) { nowish - 14_400 }
   let(:worker_updated_at) { nowish - 14_400 }
+
+  let :device_id do
+    "fafafaf-afafafa-fafafafafafaf-#{rand(100_000..1_000_000)}-afafafafaf"
+  end
 
   before do
     allow(store).to receive(:now).and_return(nowish)
@@ -48,7 +51,7 @@ describe Pupcycler::Upcycler do
     )
     stub_request(
       :get,
-      %r{api\.packet\.net/devices/fafafaf-[-af]+-afafafafaf$}
+      %r{api\.packet\.net/devices/fafafaf-.+-afafafafaf$}
     ).to_return(
       status: 200,
       headers: {
@@ -72,6 +75,22 @@ describe Pupcycler::Upcycler do
   describe 'upcycling' do
     it 'can upcycle' do
       subject.upcycle!
+    end
+
+    context 'when device is deleted' do
+      before do
+        allow(subject).to receive(:deleted?).and_return(true)
+      end
+
+      it 'wipes record of the device' do
+        expect(store).to receive(:wipe_device).with(device_id: device_id)
+        subject.upcycle!
+      end
+
+      it 'does not check for staleness' do
+        expect(subject).to_not receive(:stale?)
+        subject.upcycle!
+      end
     end
 
     context 'when device is unresponsive' do
