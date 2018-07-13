@@ -15,6 +15,12 @@ module Pupcycler
           'AUTH_TOKENS', 'notset'
         )
       ).split(',').map(&:strip),
+      environment: ENV.fetch(
+        'PUPCYCLER_ENVIRONMENT',
+        ENV.fetch(
+          'ENVIRONMENT', 'notset'
+        )
+      ),
       log_level: 'info',
       logger: { format_type: 'l2met', thread_id: true },
       packet_auth_token: ENV.fetch(
@@ -29,6 +35,7 @@ module Pupcycler
           'PACKET_PROJECT_ID', 'notset'
         )
       ),
+      pool: ENV.fetch('PUPCYCLER_POOL', ENV.fetch('POOL', '0')),
       redis_url: ENV.fetch(
         ENV.fetch('REDIS_PROVIDER', 'REDIS_URL'), 'redis://localhost:6379/0'
       ),

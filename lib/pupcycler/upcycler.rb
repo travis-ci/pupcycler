@@ -4,16 +4,19 @@ require 'pupcycler'
 
 module Pupcycler
   class Upcycler
-    def initialize(cooldown_threshold: 900, staleness_threshold: 43_200,
+    def initialize(cooldown_threshold: 900, environment: 'test',
+                   pool: 0, staleness_threshold: 43_200,
                    unresponsiveness_threshold: 3_600)
       @cooldown_threshold = cooldown_threshold
+      @matching_tags = %W[worker #{environment} pool-#{pool}]
       @staleness_threshold = staleness_threshold
       @unresponsiveness_threshold = unresponsiveness_threshold
     end
 
-    attr_reader :cooldown_threshold, :staleness_threshold
+    attr_reader :cooldown_threshold, :matching_tags, :staleness_threshold
     attr_reader :unresponsiveness_threshold
     private :cooldown_threshold
+    private :matching_tags
     private :staleness_threshold
     private :unresponsiveness_threshold
 
@@ -81,7 +84,7 @@ module Pupcycler
 
     private def worker_devices
       packet_client.devices.select do |dev|
-        dev.tags.include?('worker')
+        (dev.tags & matching_tags) == matching_tags
       end
     end
 
