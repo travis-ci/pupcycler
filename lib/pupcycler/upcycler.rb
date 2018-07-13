@@ -22,6 +22,11 @@ module Pupcycler
         store.save_hostname(device_id: dev.id, hostname: dev.hostname)
         store.save_boop(device_id: dev.id)
 
+        if deleted?(dev.id, store.fetch_heartbeat(device_id: dev.id))
+          store.wipe_device(device_id: dev.id)
+          next
+        end
+
         if unresponsive?(store.fetch_heartbeat(device_id: dev.id))
           reboot(device_id: dev.id)
           next
@@ -51,6 +56,17 @@ module Pupcycler
       return if uptime > cooldown_threshold
       raise 'device still cooling down ' \
             "uptime=#{uptime}s threshold=#{cooldown_threshold}"
+    end
+
+    private def deleted?(device_id, last_heartbeat)
+      packet_client.device(device_id: device_id)
+      false
+    rescue StandardError => e
+      logger.info(
+        'failed to fetch possibly deleted device',
+        device_id: device_id, err: e
+      )
+      unresponsive?(last_heartbeat)
     end
 
     private def unresponsive?(last_heartbeat)

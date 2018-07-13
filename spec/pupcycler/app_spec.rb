@@ -15,12 +15,17 @@ describe Pupcycler::App do
     Time.parse(Time.now.utc.iso8601(0))
   end
 
+  let :device_id do
+    "fafafaf-afafafa-fafafafafafaf-#{rand(100_000..1_000_000)}-afafafafaf"
+  end
+
   let :body do
     JSON.parse(last_response.body)
   end
 
   before do
     Pupcycler.config.auth_tokens = %w[fafafaf]
+    store.wipe_device(device_id: device_id)
     allow_any_instance_of(Pupcycler::Store).to receive(:now)
       .and_return(nowish)
   end
@@ -55,7 +60,7 @@ describe Pupcycler::App do
 
   describe 'GET /heartbeats/{device_id}' do
     before do
-      get '/heartbeats/fafafaf', nil,
+      get "/heartbeats/#{device_id}", nil,
           'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -64,7 +69,7 @@ describe Pupcycler::App do
     end
 
     it 'records heartbeat' do
-      expect(store.fetch_heartbeat(device_id: 'fafafaf')).to eql(nowish)
+      expect(store.fetch_heartbeat(device_id: device_id)).to eql(nowish)
     end
 
     it 'responds with the state' do
@@ -74,7 +79,7 @@ describe Pupcycler::App do
 
   describe 'POST /startups/{device_id}' do
     before do
-      post '/startups/fafafaf', nil,
+      post "/startups/#{device_id}", nil,
            'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -83,11 +88,11 @@ describe Pupcycler::App do
     end
 
     it 'records startup' do
-      expect(store.fetch_startup(device_id: 'fafafaf')).to eql(nowish)
+      expect(store.fetch_startup(device_id: device_id)).to eql(nowish)
     end
 
     it 'saves state as up' do
-      expect(store.fetch_state(device_id: 'fafafaf')).to eql('up')
+      expect(store.fetch_state(device_id: device_id)).to eql('up')
     end
 
     it 'responds with the state' do
@@ -99,7 +104,7 @@ describe Pupcycler::App do
     before do
       stub_request(
         :get,
-        %r{api\.packet\.net/devices/fafafaf$}
+        %r{api\.packet\.net/devices/#{device_id}$}
       ).to_return(
         status: 200,
         headers: {
@@ -108,7 +113,7 @@ describe Pupcycler::App do
         body: JSON.generate(
           'updated_at' => (nowish - 3600).to_s,
           'hostname' => 'fafafaf-testing-1-buh',
-          'id' => 'fafafaf-afafafa-fafafafafafaf-afafaf-afafafafaf',
+          'id' => device_id,
           'state' => 'running',
           'tags' => %w[worker testing],
           'created_at' => (nowish - 7200).to_s
@@ -116,10 +121,10 @@ describe Pupcycler::App do
       )
       stub_request(
         :post,
-        %r{api\.packet\.net/devices/fafafaf/actions\?type=reboot}
+        %r{api\.packet\.net/devices/#{device_id}/actions\?type=reboot}
       ).to_return(status: 200)
 
-      post '/shutdowns/fafafaf', nil,
+      post "/shutdowns/#{device_id}", nil,
            'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -128,18 +133,18 @@ describe Pupcycler::App do
     end
 
     it 'saves shutdown' do
-      expect(store.fetch_shutdown(device_id: 'fafafaf')).to eql(nowish)
+      expect(store.fetch_shutdown(device_id: device_id)).to eql(nowish)
     end
 
     it 'reboots' do
       expect(WebMock).to have_requested(
         :post,
-        %r{api\.packet\.net/devices/fafafaf/actions\?type=reboot}
+        %r{api\.packet\.net/devices/#{device_id}/actions\?type=reboot}
       )
     end
 
     it 'saves state as down' do
-      expect(store.fetch_state(device_id: 'fafafaf')).to eql('down')
+      expect(store.fetch_state(device_id: device_id)).to eql('down')
     end
 
     it 'responds with state' do

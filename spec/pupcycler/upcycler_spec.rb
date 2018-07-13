@@ -3,12 +3,44 @@
 describe Pupcycler::Upcycler do
   subject { Pupcycler.upcycler }
   let(:nowish) { Time.parse(Time.now.utc.iso8601(0)) }
-  let(:device_id) { 'fafafaf-afafafa-fafafafafafaf-afafaf-afafafafaf' }
   let(:store) { subject.send(:store) }
   let(:packet_client) { subject.send(:packet_client) }
   let(:last_heartbeat) { nowish - 300 }
   let(:last_startup) { nowish - 14_400 }
   let(:worker_updated_at) { nowish - 14_400 }
+
+  let :device_id do
+    "fafafaf-afafafa-fafafafafafaf-#{rand(100_000..1_000_000)}-afafafafaf"
+  end
+
+  let :api_response_hash do
+    {
+      'devices' => [
+        {
+          'updated_at' => worker_updated_at.to_s,
+          'hostname' => 'fafafaf-testing-1-buh',
+          'id' => device_id,
+          'state' => 'running',
+          'tags' => %w[worker testing],
+          'created_at' => (nowish - 7200).to_s
+        },
+        {
+          'updated_at' => (nowish - 3600).to_s,
+          'hostname' => 'fafafaf-testing-1-qhu',
+          'id' => 'not-' + device_id,
+          'state' => 'running',
+          'tags' => %w[bloop testing],
+          'created_at' => (nowish - 7200).to_s
+        }
+      ]
+    }
+  end
+
+  let :device do
+    Pupcycler::PacketDevice.from_api_hash(
+      api_response_hash.fetch('devices').first
+    )
+  end
 
   before do
     allow(store).to receive(:now).and_return(nowish)
@@ -25,43 +57,17 @@ describe Pupcycler::Upcycler do
       headers: {
         'Content-Type' => 'application/json'
       },
-      body: JSON.generate(
-        'devices' => [
-          {
-            'updated_at' => worker_updated_at.to_s,
-            'hostname' => 'fafafaf-testing-1-buh',
-            'id' => device_id,
-            'state' => 'running',
-            'tags' => %w[worker testing],
-            'created_at' => (nowish - 7200).to_s
-          },
-          {
-            'updated_at' => (nowish - 3600).to_s,
-            'hostname' => 'fafafaf-testing-1-qhu',
-            'id' => 'not-' + device_id,
-            'state' => 'running',
-            'tags' => %w[bloop testing],
-            'created_at' => (nowish - 7200).to_s
-          }
-        ]
-      )
+      body: JSON.generate(api_response_hash)
     )
     stub_request(
       :get,
-      %r{api\.packet\.net/devices/fafafaf-[-af]+-afafafafaf$}
+      %r{api\.packet\.net/devices/fafafaf-.+-afafafafaf$}
     ).to_return(
       status: 200,
       headers: {
         'Content-Type' => 'application/json'
       },
-      body: JSON.generate(
-        'updated_at' => worker_updated_at.to_s,
-        'hostname' => 'fafafaf-testing-1-buh',
-        'id' => device_id,
-        'state' => 'running',
-        'tags' => %w[worker testing],
-        'created_at' => (nowish - 7200).to_s
-      )
+      body: JSON.generate(api_response_hash.fetch('devices').first)
     )
     stub_request(
       :post,
@@ -72,6 +78,22 @@ describe Pupcycler::Upcycler do
   describe 'upcycling' do
     it 'can upcycle' do
       subject.upcycle!
+    end
+
+    context 'when device is deleted' do
+      before do
+        allow(subject).to receive(:deleted?).and_return(true)
+      end
+
+      it 'wipes record of the device' do
+        expect(store).to receive(:wipe_device).with(device_id: device_id)
+        subject.upcycle!
+      end
+
+      it 'does not check for staleness' do
+        expect(subject).to_not receive(:stale?)
+        subject.upcycle!
+      end
     end
 
     context 'when device is unresponsive' do
@@ -131,6 +153,42 @@ describe Pupcycler::Upcycler do
       end.to change {
         store.fetch_state(device_id: device_id)
       }.from('up').to('down')
+    end
+  end
+
+  describe 'deletion detection' do
+    context 'when device exists' do
+      before do
+        allow(packet_client).to receive(:device)
+          .with(device_id: device_id).and_return(device)
+      end
+
+      it 'reports false' do
+        expect(subject.send(:deleted?, device_id, nowish - 7200)).to be false
+      end
+    end
+
+    context 'when device does not exist' do
+      before do
+        allow(packet_client).to receive(:device)
+          .with(device_id: device_id).and_raise(StandardError.new('ugh!'))
+      end
+
+      context 'when device is unresponsive' do
+        before do
+          allow(subject).to receive(:unresponsive?).and_return(true)
+        end
+
+        it 'reports true' do
+          expect(subject.send(:deleted?, device_id, nowish - 7200)).to be true
+        end
+      end
+
+      context 'when device is still responsive' do
+        before do
+          allow(subject).to receive(:unresponsive?).and_return(false)
+        end
+      end
     end
   end
 end
