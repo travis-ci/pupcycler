@@ -51,6 +51,8 @@ module Pupcycler
   def upcycler
     @upcycler ||= Pupcycler::Upcycler.new(
       cooldown_threshold: config.upcycler_cooldown_threshold,
+      environment: config.environment,
+      pool: config.pool,
       staleness_threshold: config.upcycler_staleness_threshold,
       unresponsiveness_threshold: config.upcycler_unresponsiveness_threshold
     )

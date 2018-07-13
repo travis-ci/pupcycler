@@ -21,7 +21,7 @@ describe Pupcycler::Upcycler do
           'hostname' => 'fafafaf-testing-1-buh',
           'id' => device_id,
           'state' => 'running',
-          'tags' => %w[worker testing],
+          'tags' => %w[worker notset pool-0],
           'created_at' => (nowish - 7200).to_s
         },
         {
