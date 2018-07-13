@@ -60,7 +60,7 @@ describe Pupcycler::App do
 
   describe 'GET /heartbeats/{device_id}' do
     before do
-      get '/heartbeats/fafafaf', nil,
+      get "/heartbeats/#{device_id}", nil,
           'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -79,7 +79,7 @@ describe Pupcycler::App do
 
   describe 'POST /startups/{device_id}' do
     before do
-      post '/startups/fafafaf', nil,
+      post "/startups/#{device_id}", nil,
            'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -104,7 +104,7 @@ describe Pupcycler::App do
     before do
       stub_request(
         :get,
-        %r{api\.packet\.net/devices/fafafaf$}
+        %r{api\.packet\.net/devices/#{device_id}$}
       ).to_return(
         status: 200,
         headers: {
@@ -113,7 +113,7 @@ describe Pupcycler::App do
         body: JSON.generate(
           'updated_at' => (nowish - 3600).to_s,
           'hostname' => 'fafafaf-testing-1-buh',
-          'id' => 'fafafaf-afafafa-fafafafafafaf-afafaf-afafafafaf',
+          'id' => device_id,
           'state' => 'running',
           'tags' => %w[worker testing],
           'created_at' => (nowish - 7200).to_s
@@ -121,10 +121,10 @@ describe Pupcycler::App do
       )
       stub_request(
         :post,
-        %r{api\.packet\.net/devices/fafafaf/actions\?type=reboot}
+        %r{api\.packet\.net/devices/#{device_id}/actions\?type=reboot}
       ).to_return(status: 200)
 
-      post '/shutdowns/fafafaf', nil,
+      post "/shutdowns/#{device_id}", nil,
            'HTTP_AUTHORIZATION' => 'token fafafaf'
     end
 
@@ -139,7 +139,7 @@ describe Pupcycler::App do
     it 'reboots' do
       expect(WebMock).to have_requested(
         :post,
-        %r{api\.packet\.net/devices/fafafaf/actions\?type=reboot}
+        %r{api\.packet\.net/devices/#{device_id}/actions\?type=reboot}
       )
     end
 
