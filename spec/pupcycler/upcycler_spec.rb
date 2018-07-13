@@ -51,7 +51,7 @@ describe Pupcycler::Upcycler do
 
     stub_request(
       :get,
-      %r{api\.packet\.net/projects/[^/]+/devices$}
+      %r{api\.packet\.net/projects/[^/]+/devices(\?page=.+|)$}
     ).to_return(
       status: 200,
       headers: {
