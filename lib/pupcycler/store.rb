@@ -9,6 +9,11 @@ module Pupcycler
     TIME_COERCE = ->(s) { Time.parse(s) }
     private_constant :TIME_COERCE
 
+    NAMESPACES = {
+      devices: 'device:'
+    }.freeze
+    private_constant :NAMESPACES
+
     DEVICE_KEYS_COERCIONS = {
       boop: TIME_COERCE,
       heartbeat: TIME_COERCE,
@@ -32,72 +37,73 @@ module Pupcycler
     attr_accessor :redis_pool
 
     def save_heartbeat(device_id: '')
-      save_for_device('device:heartbeats', device_id)
+      save_for_device('heartbeats', device_id)
     end
 
     def fetch_heartbeat(device_id: '')
-      fetch_for_device('device:heartbeats', device_id, default_value: nil,
-                                                       coerce: TIME_COERCE)
+      fetch_for_device('heartbeats', device_id, default_value: nil,
+                                                coerce: TIME_COERCE)
     end
 
     def save_reboot(device_id: '')
-      save_for_device('device:reboots', device_id)
+      save_for_device('reboots', device_id)
     end
 
     def fetch_reboot(device_id: '')
-      fetch_for_device('device:reboots', device_id, default_value: nil,
-                                                    coerce: TIME_COERCE)
+      fetch_for_device('reboots', device_id, default_value: nil,
+                                             coerce: TIME_COERCE)
     end
 
     def save_startup(device_id: '')
-      save_for_device('device:startups', device_id)
+      save_for_device('startups', device_id)
     end
 
     def fetch_startup(device_id: '')
-      fetch_for_device('device:startups', device_id, default_value: nil,
-                                                     coerce: TIME_COERCE)
+      fetch_for_device('startups', device_id, default_value: nil,
+                                              coerce: TIME_COERCE)
     end
 
     def save_shutdown(device_id: '')
-      save_for_device('device:shutdowns', device_id)
+      save_for_device('shutdowns', device_id)
     end
 
     def fetch_shutdown(device_id: '')
-      fetch_for_device('device:shutdowns', device_id, default_value: nil,
-                                                      coerce: TIME_COERCE)
+      fetch_for_device('shutdowns', device_id, default_value: nil,
+                                               coerce: TIME_COERCE)
     end
 
     def save_state(device_id: '', state: '')
-      save_for_device('device:states', device_id, value: state, count: false)
+      save_for_device('states', device_id, value: state, count: false)
     end
 
     def fetch_state(device_id: '')
-      fetch_for_device('device:states', device_id, default_value: 'up')
+      fetch_for_device('states', device_id, default_value: 'up')
     end
 
     def save_boop(device_id: '')
-      save_for_device('device:boops', device_id, value: now, count: false)
+      save_for_device('boops', device_id, value: now, count: false)
     end
 
     def save_hostname(device_id: '', hostname: '')
       save_for_device(
-        'device:hostnames', device_id, value: hostname, count: false
+        'hostnames', device_id, value: hostname, count: false
       )
     end
 
     def fetch_devices
       devices_by_id = {}
+      ns = NAMESPACES.fetch(:devices)
 
       DEVICE_KEYS_COERCIONS.each do |subkey, coerce|
         hgetall_coerce(
-          "#{subkey}s", coerce: coerce
+          "#{ns}#{subkey}s", coerce: coerce
         ).each do |device_id, value|
           devices_by_id[device_id] ||= EMPTY_DEVICE_RECORD.merge(id: device_id)
           devices_by_id[device_id][subkey] = value
         end
 
         hgetall_coerce(
-          "#{subkey}s:count", coerce: ->(s) { s.to_i }
+          "#{ns}#{subkey}s:count", coerce: ->(s) { s.to_i }
         ).each do |device_id, count|
           devices_by_id[device_id] ||= EMPTY_DEVICE_RECORD.merge(id: device_id)
           devices_by_id[device_id]["#{subkey}_count".to_sym] = count
@@ -110,11 +116,13 @@ module Pupcycler
     end
 
     def wipe_device(device_id: '')
+      ns = NAMESPACES.fetch(:devices)
+
       redis_pool.with do |redis|
         redis.multi do |conn|
           DEVICE_KEYS_COERCIONS.keys.each do |subkey|
-            conn.hdel("devices:#{subkey}s", device_id)
-            conn.hdel("devices:#{subkey}s:count", device_id)
+            conn.hdel("#{ns}#{subkey}s", device_id)
+            conn.hdel("#{ns}#{subkey}s:count", device_id)
           end
         end
       end
@@ -129,9 +137,10 @@ module Pupcycler
       raise 'missing device id' if device_id.empty?
 
       ret = { value: default_value }
+      ns = NAMESPACES.fetch(:devices)
 
       redis_pool.with do |redis|
-        value = redis.hget(key, device_id).to_s.strip
+        value = redis.hget("#{ns}#{key}", device_id).to_s.strip
         ret[:value] = coerce.call(value) unless value.empty?
       end
 
@@ -145,23 +154,25 @@ module Pupcycler
       device_id = device_id.to_s.strip
       raise 'missing device id' if device_id.empty?
 
+      ns = NAMESPACES.fetch(:devices)
+
       redis_pool.with do |redis|
         redis.multi do |conn|
-          conn.hset(key, device_id, value || now)
+          conn.hset("#{ns}#{key}", device_id, value || now)
           next unless count
-          conn.hincrby("#{key}:count", device_id, 1)
+          conn.hincrby("#{ns}#{key}:count", device_id, 1)
         end
       end
     end
 
-    private def hgetall_coerce(key, coerce: nil)
+    private def hgetall_coerce(ns_key, coerce: nil)
       ret = {}
       coerce = ->(s) { s } if coerce.nil?
 
       redis_pool.with do |redis|
         ret.merge!(
           Hash[
-            redis.hgetall("device:#{key}").map { |i, t| [i, coerce.call(t)] }
+            redis.hgetall(ns_key).map { |i, t| [i, coerce.call(t)] }
           ]
         )
       end
