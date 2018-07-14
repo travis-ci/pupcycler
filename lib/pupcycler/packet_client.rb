@@ -26,8 +26,9 @@ module Pupcycler
         accum += resp.body.fetch('devices').map do |h|
           Pupcycler::PacketDevice.from_api_hash(h)
         end
-        next_page = (resp.body['meta'] || {}).fetch('next', nil)
-        break if next_page.nil?
+        meta_next = resp.body.fetch('meta', {}).fetch('next', nil)
+        break if meta_next.nil?
+        next_page = meta_next.fetch('href')
       end
 
       accum.uniq(&:id)
