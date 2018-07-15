@@ -21,23 +21,18 @@ module Pupcycler
     private :unresponsiveness_threshold
 
     def upcycle!
-      worker_devices.each do |dev|
-        store.save_hostname(device_id: dev.id, hostname: dev.hostname)
-        store.save_boop(device_id: dev.id)
+      seen = []
 
-        if deleted?(dev.id, store.fetch_heartbeat(device_id: dev.id))
-          store.wipe_device(device_id: dev.id)
-          next
-        end
+      packet_known_worker_devices.each do |dev|
+        seen << dev.id
+        upcycle_device!(device_id: dev.id, hostname: dev.hostname)
+      end
 
-        if unresponsive?(store.fetch_heartbeat(device_id: dev.id))
-          reboot(device_id: dev.id)
-          next
-        end
-
-        if stale?(store.fetch_startup(device_id: dev.id))
-          graceful_shutdown(device_id: dev.id)
-        end
+      store.fetch_devices.each do |dev_hash|
+        next if seen.include?(dev_hash.fetch(:id))
+        upcycle_device!(
+          device_id: dev_hash.fetch(:id), hostname: dev_hash.fetch(:hostname)
+        )
       end
     end
 
@@ -51,6 +46,24 @@ module Pupcycler
     def graceful_shutdown(device_id: '')
       logger.info 'gracefully shutting down', device_id: device_id
       store.save_state(device_id: device_id, state: 'down')
+    end
+
+    private def upcycle_device!(device_id: '', hostname: '')
+      store.save_hostname(device_id: device_id, hostname: hostname)
+      store.save_boop(device_id: device_id)
+
+      if deleted?(device_id, store.fetch_heartbeat(device_id: device_id))
+        store.wipe_device(device_id: device_id)
+        return
+      end
+
+      if unresponsive?(store.fetch_heartbeat(device_id: device_id))
+        reboot(device_id: device_id)
+        return
+      end
+
+      return unless stale?(store.fetch_startup(device_id: device_id))
+      graceful_shutdown(device_id: device_id)
     end
 
     private def assert_device_cooled_down!(device_id: '')
@@ -82,7 +95,7 @@ module Pupcycler
       (now - startup) > staleness_threshold
     end
 
-    private def worker_devices
+    private def packet_known_worker_devices
       packet_client.devices.select do |dev|
         (dev.tags & matching_tags) == matching_tags
       end

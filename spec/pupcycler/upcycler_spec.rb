@@ -43,6 +43,13 @@ describe Pupcycler::Upcycler do
   end
 
   before do
+    Pupcycler.redis_pool.with do |redis|
+      keys = redis.scan_each(match: 'device:*').to_a.uniq
+      redis.multi do |conn|
+        keys.each { |k| conn.del(k) }
+      end
+    end
+
     allow(store).to receive(:now).and_return(nowish)
     allow(store).to receive(:fetch_heartbeat)
       .with(device_id: device_id).and_return(last_heartbeat)
