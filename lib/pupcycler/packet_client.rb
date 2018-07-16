@@ -17,11 +17,21 @@ module Pupcycler
     private :project_id
 
     def devices
-      resp = conn.get("/projects/#{project_id}/devices")
-      raise resp.body.fetch('errors', ['bork!']).first unless resp.success?
-      resp.body.fetch('devices').map do |h|
-        Pupcycler::PacketDevice.from_api_hash(h)
+      accum = []
+      next_page = "/projects/#{project_id}/devices?page=1"
+
+      loop do
+        resp = conn.get(next_page)
+        raise resp.body.fetch('errors', ['bork!']).first unless resp.success?
+        accum += resp.body.fetch('devices').map do |h|
+          Pupcycler::PacketDevice.from_api_hash(h)
+        end
+        meta_next = resp.body.fetch('meta', {}).fetch('next', nil)
+        break if meta_next.nil?
+        next_page = meta_next.fetch('href')
       end
+
+      accum.uniq(&:id)
     end
 
     def device(device_id: '')

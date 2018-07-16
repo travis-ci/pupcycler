@@ -43,6 +43,13 @@ describe Pupcycler::Upcycler do
   end
 
   before do
+    Pupcycler.redis_pool.with do |redis|
+      keys = redis.scan_each(match: 'device:*').to_a.uniq
+      redis.multi do |conn|
+        keys.each { |k| conn.del(k) }
+      end
+    end
+
     allow(store).to receive(:now).and_return(nowish)
     allow(store).to receive(:fetch_heartbeat)
       .with(device_id: device_id).and_return(last_heartbeat)
@@ -51,7 +58,7 @@ describe Pupcycler::Upcycler do
 
     stub_request(
       :get,
-      %r{api\.packet\.net/projects/[^/]+/devices$}
+      %r{api\.packet\.net/projects/[^/]+/devices(\?page=.+|)$}
     ).to_return(
       status: 200,
       headers: {
@@ -120,6 +127,32 @@ describe Pupcycler::Upcycler do
       it 'gracefully shuts down the device' do
         expect(subject).to receive(:graceful_shutdown)
           .with(device_id: device_id)
+        subject.upcycle!
+      end
+    end
+
+    context 'when store contains devices unknown to packet' do
+      before do
+        allow(subject).to receive(:packet_known_worker_devices).and_return([])
+        allow(store).to receive(:fetch_devices).and_return(
+          [
+            {
+              boop: '2018-07-15 03:32:01 UTC',
+              heartbeat: nil,
+              hostname: 'fancy-1-worker-org-07-packet',
+              reboot: nil,
+              shutdown: nil,
+              startup: nil,
+              state: nil,
+              id: device_id
+            }
+          ]
+        )
+      end
+
+      it 'upcycles' do
+        expect(subject).to receive(:upcycle_device!)
+          .with(device_id: device_id, hostname: 'fancy-1-worker-org-07-packet')
         subject.upcycle!
       end
     end

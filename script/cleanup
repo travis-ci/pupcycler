@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+libdir = File.expand_path('../lib', __dir__)
+$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+
+require 'pupcycler'
+Pupcycler.store.cleanup! do |device_id|
+  Pupcycler.logger.info 'cleaning up', device_id: device_id
+end
