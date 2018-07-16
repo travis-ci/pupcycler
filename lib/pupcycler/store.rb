@@ -128,6 +128,13 @@ module Pupcycler
       end
     end
 
+    def cleanup!(nil_check_keys: %i[heartbeat reboot shutdown startup state])
+      fetch_devices.each do |dev|
+        next unless nil_check_keys.map { |k| dev.fetch(k).nil? }.all?
+        wipe_device(device_id: dev.fetch(:id))
+      end
+    end
+
     private def fetch_for_device(key, device_id,
                                  default_value: nil, coerce: ->(v) { v })
       key = key.to_s.strip
