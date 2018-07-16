@@ -132,6 +132,7 @@ module Pupcycler
       fetch_devices.each do |dev|
         next unless nil_check_keys.map { |k| dev.fetch(k).nil? }.all?
         wipe_device(device_id: dev.fetch(:id))
+        yield dev.fetch(:id) if block_given?
       end
     end
 
