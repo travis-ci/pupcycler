@@ -130,6 +130,32 @@ describe Pupcycler::Upcycler do
         subject.upcycle!
       end
     end
+
+    context 'when store contains devices unknown to packet' do
+      before do
+        allow(subject).to receive(:packet_known_worker_devices).and_return([])
+        allow(store).to receive(:fetch_devices).and_return(
+          [
+            {
+              boop: '2018-07-15 03:32:01 UTC',
+              heartbeat: nil,
+              hostname: 'fancy-1-worker-org-07-packet',
+              reboot: nil,
+              shutdown: nil,
+              startup: nil,
+              state: nil,
+              id: device_id
+            }
+          ]
+        )
+      end
+
+      it 'upcycles' do
+        expect(subject).to receive(:upcycle_device!)
+          .with(device_id: device_id, hostname: 'fancy-1-worker-org-07-packet')
+        subject.upcycle!
+      end
+    end
   end
 
   describe 'rebooting' do
